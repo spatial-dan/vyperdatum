@@ -260,7 +260,10 @@ class VyperRaster(VyperCore):
                     elif part.startswith('grids='):
                         junk, grid_file = part.split('=')
                         grid_path = None
-                        proj_directories = pyproj.datadir.get_data_dir().split(';')
+                        # TODO: Make platform independent 
+                        # proj_directories = pyproj.datadir.get_data_dir().split(';') // Windows
+                        proj_directories = pyproj.datadir.get_data_dir().split(':') # Mac and Linux
+
                         for gpth in proj_directories:
                             newpth = os.path.join(gpth, grid_file)
                             if os.path.exists(newpth):

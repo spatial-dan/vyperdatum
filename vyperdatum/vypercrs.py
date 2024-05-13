@@ -928,6 +928,8 @@ def build_valid_vert_crs(crs: pyproj_VerticalCRS, regions: [str], datum_data: ob
                 valid_pipeline = True
             else:
                 geoid_name = datum_data.get_geoid_name(region)
+                geoid_name = normalize_mixed_path(geoid_name) # DN FIX: UPDATE TO USE PROPER PATH DELIMETERS
+
                 new_pipeline = get_regional_pipeline('ellipse', datum, region, geoid_name)
                 valid_pipeline, new_pipeline = is_valid_regional_pipeline(new_pipeline)
             if new_pipeline and valid_pipeline:
@@ -1066,7 +1068,9 @@ def is_valid_regional_pipeline(pipeline: str) -> bool:
             prefix, grid = part.split('=')
             grid_list.append(grid)
     paths = pyproj.datadir.get_data_dir()
-    path_list = paths.split(';')
+    #TODO: Platform indepented path splitting 
+    #path_list = paths.split(';') # Windows
+    path_list = paths.split(':')
 
     valid = False
     for grid in grid_list:
@@ -1110,3 +1114,25 @@ def crs_is_compound(my_crs: CRS):
             return True
     return False
 
+def normalize_mixed_path(path):
+    """
+    Normalize a mixed-delimiter pathname by replacing all non-standard delimiters for the current platform
+    with the standard one, and then collapsing redundant separators and up-level references.
+    
+    Parameters:
+    - path (str): The path string with potentially inconsistent delimiters.
+    
+    Returns:
+    - str: The normalized path string with correct delimiters for the current platform.
+    """
+    # Determine the standard and non-standard delimiter for the current platform
+    standard_delimiter = os.sep  # os.sep is '/' on Unix and '\\' on Windows
+    non_standard_delimiter = '/' if os.sep == '\\' else '\\'
+    
+    # Replace non-standard delimiters with the standard one
+    normalized_delimiters_path = path.replace(non_standard_delimiter, standard_delimiter)
+    
+    # Normalize the path to collapse redundant separators and up-level references
+    normalized_path = os.path.normpath(normalized_delimiters_path)
+    
+    return normalized_path
