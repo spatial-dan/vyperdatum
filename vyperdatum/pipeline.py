@@ -1,3 +1,4 @@
+import os
 
 nad83_itrf2008_pipeline = '+proj=pipeline +step +proj=axisswap +order=2,1 ' \
                           '+step +proj=unitconvert +xy_in=deg +xy_out=rad ' \
@@ -23,12 +24,18 @@ datum_definition = {
     'navd88'   : ['+proj=vgridshift grids=GEOID'],
     'tss'      : ['+proj=vgridshift grids=GEOID',
                   '+inv +proj=vgridshift grids=REGION\\tss.gtx'],
+    'mlw'     : ['+proj=vgridshift grids=GEOID',
+                  '+inv +proj=vgridshift grids=REGION\\tss.gtx',
+                  '+proj=vgridshift grids=REGION\\mlw.gtx'],
     'mllw'     : ['+proj=vgridshift grids=GEOID',
                   '+inv +proj=vgridshift grids=REGION\\tss.gtx',
                   '+proj=vgridshift grids=REGION\\mllw.gtx'],
     'noaa chart datum': ['+proj=vgridshift grids=GEOID',
                          '+inv +proj=vgridshift grids=REGION\\tss.gtx',
                          '+proj=vgridshift grids=REGION\\mllw.gtx'],
+    'mhhw'     : ['+proj=vgridshift grids=GEOID',
+                 '+inv +proj=vgridshift grids=REGION\\tss.gtx',
+                 '+proj=vgridshift grids=REGION\\mhhw.gtx'],
     'mhw'     : ['+proj=vgridshift grids=GEOID',
                  '+inv +proj=vgridshift grids=REGION\\tss.gtx',
                  '+proj=vgridshift grids=REGION\\mhw.gtx'],
@@ -90,6 +97,14 @@ def get_regional_pipeline(from_datum: str, to_datum: str, region_name: str, geoi
     pipeline = ' +step '.join(transformation_def)
     regional_pipeline = pipeline.replace('REGION', region_name)
     regional_pipeline = regional_pipeline.replace('GEOID', geoid_name)
+
+    # Determine the standard and non-standard delimiter for the current platform
+    standard_delimiter = os.sep  # os.sep is '/' on Unix and '\\' on Windows
+    non_standard_delimiter = '/' if os.sep == '\\' else '\\'
+    
+    # Replace non-standard delimiters with the standard one
+    regional_pipeline = regional_pipeline.replace(non_standard_delimiter, standard_delimiter)
+
 
     return regional_pipeline
 
