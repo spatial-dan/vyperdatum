@@ -457,7 +457,7 @@ class VyperCore:
                 self._regions = valid_regions
                 self.in_crs.update_regions(valid_regions)
                 self.out_crs.update_regions(valid_regions)
-                self.log_info(f'transformed {len(ans_z)} points from {self.in_crs.vyperdatum_str} to {self.out_crs.vyperdatum_str}')
+                #self.log_info(f'transformed {len(ans_z)} points from {self.in_crs.vyperdatum_str} to {self.out_crs.vyperdatum_str}')
             else:
                 self.log_error('No valid region found with the specified datum transformation. Unable to perform transformation', ValueError)
             return ans_x, ans_y, np.round(ans_z, 5), ans_unc, ans_region
