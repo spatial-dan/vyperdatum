@@ -400,6 +400,7 @@ class VyperCore:
                 z *= -1
 
             # DN: Disable sign flipping 
+            flip = 1
             #if self.out_crs.is_height:
             #    flip = 1
             #else:
