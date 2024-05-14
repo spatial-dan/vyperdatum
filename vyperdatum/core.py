@@ -398,10 +398,12 @@ class VyperCore:
             if z is not None and not self.in_crs.is_height:
                 z = z.copy()  # do not alter the array input
                 z *= -1
-            if self.out_crs.is_height:
-                flip = 1
-            else:
-                flip = -1
+
+            # DN: Disable sign flipping 
+            #if self.out_crs.is_height:
+            #    flip = 1
+            #else:
+            #    flip = -1
 
             ans_x = np.full_like(x, np.nan)
             ans_y = np.full_like(y, np.nan)
