@@ -357,7 +357,7 @@ class VyperRaster(VyperCore):
         self.log_info(f'Applying vdatum separation model to {self.raster_vdatum_sep.size} total points')
 
         # DN: Disable flip 
-        flip = -1
+        flip = 1
         #if self.in_crs.is_height == self.out_crs.is_height:
         #    flip = 1
         #else:
