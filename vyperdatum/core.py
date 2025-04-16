@@ -83,34 +83,38 @@ class VyperCore:
                 self.logger.removeHandler(handler)
         self.logger = None
 
+
     def set_region_by_bounds(self, x_min: float, y_min: float, x_max: float, y_max: float):
         """
         Set the regions that intersect with the provided bounds and store a list of region names that overlap.
-        This input corrdinate reference system is expected to be NAD83(2011) geographic.
+        This input coordinate reference system is expected to be NAD83(2011) geographic.
 
         Parameters
         ----------
-        x_min
-            the minimum longitude of the area of interest
-        y_min
-            the minimum latitude of the area of interest
-        x_max
-            the maximum longitude of the area of interest
-        y_max
-            the maximum latitude of the area of interest
+        x_min : float
+            The minimum longitude of the area of interest.
+        y_min : float
+            The minimum latitude of the area of interest.
+        x_max : float
+            The maximum longitude of the area of interest.
+        y_max : float
+            The maximum latitude of the area of interest.
         """
+        # Log start of process
+        print(f"[INFO] Starting set_region_by_bounds with bounds: x_min={x_min}, y_min={y_min}, x_max={x_max}, y_max={y_max}")
 
-        # TODO: Address issues with low precision for decimal places, causing these asserts to fail
-        #assert x_min < x_max
-        #assert y_min < y_max
+        # Verify bounds are valid. If not, log error and exit early.
+        if x_min >= x_max or y_min >= y_max:
+            print(f"[ERROR] Invalid bounds provided: x_min must be less than x_max and y_min must be less than y_max. Received: x_min={x_min}, y_min={y_min}, x_max={x_max}, y_max={y_max}")
+            return
 
-        # build corners from the provided bounds
+        # Build corners from the provided bounds
         ul = (x_min, y_max)
         ur = (x_max, y_max)
         lr = (x_max, y_min)
         ll = (x_min, y_min)
 
-        # build polygon from corners
+        # Create polygon geometry from corners
         ring = ogr.Geometry(ogr.wkbLinearRing)
         ring.AddPoint(ul[0], ul[1])
         ring.AddPoint(ur[0], ur[1])
@@ -119,44 +123,75 @@ class VyperCore:
         ring.AddPoint(ul[0], ul[1])
         data_geometry = ogr.Geometry(ogr.wkbPolygon)
         data_geometry.AddGeometry(ring)
+        print("[INFO] Polygon geometry created from provided bounds.")
 
-        # see if the regions intersect with the provided geometries
+        # Find regions whose polygons intersect with the created geometry
         intersecting_regions = []
         self._geoid_frame = []
         for region in self.datum_data.polygon_files:
+            print(f"[INFO] Processing region: {region}")
             vector = ogr.Open(self.datum_data.polygon_files[region])
+            if vector is None:
+                print(f"[ERROR] Could not open polygon file for region '{region}': {self.datum_data.polygon_files[region]}")
+                continue
+
             layer_count = vector.GetLayerCount()
             found = False
+
+            # Loop through each layer of the opened vector
             for m in range(layer_count):
                 layer = vector.GetLayerByIndex(m)
                 feature_count = layer.GetFeatureCount()
                 for n in range(feature_count):
                     feature = layer.GetNextFeature()
+                    if feature is None:
+                        continue
                     try:
                         feature_name = feature.GetField(0)
                     except AttributeError:
-                        print('WARNING: Unable to read feature name from feature in layer in {}'.format(self.datum_data.polygon_files[region]))
+                        print(f"[WARNING] Unable to read feature name from feature in layer of {self.datum_data.polygon_files[region]}")
                         continue
-                    if isinstance(feature_name, str):
-                        if feature_name[:15] == 'valid-transform':
-                            valid_vdatum_poly = feature.GetGeometryRef()
-                            if data_geometry.Intersect(valid_vdatum_poly):
-                                intersecting_regions.append(region)
-                                gframe = self.datum_data.get_geoid_frame(region)
-                                self._geoid_frame.append(gframe)
-                                found = True
+
+                    if isinstance(feature_name, str) and feature_name.startswith('valid-transform'):
+                        valid_vdatum_poly = feature.GetGeometryRef()
+                        if valid_vdatum_poly is not None and data_geometry.Intersect(valid_vdatum_poly):
+                            print(f"[INFO] Region '{region}' intersects with provided bounds via a valid-transform feature.")
+                            intersecting_regions.append(region)
+                            gframe = self.datum_data.get_geoid_frame(region)
+                            self._geoid_frame.append(gframe)
+                            found = True
+                    # Release feature reference if necessary
                     feature = None
+                # Release layer reference if necessary
                 layer = None
+
+            # Extended region check if none of the standard features were found
             if not found and region in self.datum_data.extended_region:
-                feature = vector.GetLayerByIndex(0).GetFeature(0)
-                if data_geometry.Intersect(feature.GetGeometryRef()):
-                    intersecting_regions.append(region)
-                    gframe = self.datum_data.get_geoid_frame(region)
-                    self._geoid_frame.append(gframe)
+                layer = vector.GetLayerByIndex(0)
+                if layer is not None:
+                    feature = layer.GetFeature(0)
+                    if feature is not None:
+                        valid_vdatum_poly = feature.GetGeometryRef()
+                        if valid_vdatum_poly is not None and data_geometry.Intersect(valid_vdatum_poly):
+                            print(f"[INFO] Region '{region}' intersects with provided bounds via extended region check.")
+                            intersecting_regions.append(region)
+                            gframe = self.datum_data.get_geoid_frame(region)
+                            self._geoid_frame.append(gframe)
+                        feature = None
+                    layer = None
             vector = None
+
         self._regions = intersecting_regions
-        self.in_crs.update_regions(intersecting_regions)
-        self.out_crs.update_regions(intersecting_regions)
+        print(f"[INFO] Intersecting regions found: {self._regions}")
+
+        # Update regions in the in_crs and out_crs objects
+        try:
+            self.in_crs.update_regions(intersecting_regions)
+            self.out_crs.update_regions(intersecting_regions)
+            print("[INFO] CRS regions updated successfully.")
+        except Exception as e:
+            print(f"[ERROR] Error updating CRS regions: {e}")
+
         
     def _set_region_by_extents(self):
         self.set_region_by_bounds(self.geographic_min_x,
@@ -389,6 +424,8 @@ class VyperCore:
             self._set_extents(extents)
         if len(self._regions) == 0:
             self._set_region_by_extents()
+
+        # Point of failure    
         if len(self._regions) > 0:
             if not self.in_crs.is_valid:
                 self.log_error('Input datum insufficently specified', ValueError)
