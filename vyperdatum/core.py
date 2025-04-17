@@ -25,6 +25,7 @@ class VyperCore:
     """
 
     def __init__(self, vdatum_directory: str = None, logfile: str = None, silent: bool = False):
+        print("VyperCoreInit")
         self.silent = silent
         self.datum_data = DatumData(vdatum_directory=vdatum_directory, parent=self)
 
@@ -37,10 +38,10 @@ class VyperCore:
         self.geographic_min_y = None
         self.geographic_max_x = None
         self.geographic_max_y = None
-
+        print("VyperCoreInit B")
         self.in_crs = VyperPipelineCRS(self.datum_data)
         self.out_crs = VyperPipelineCRS(self.datum_data)
-
+        print("VyperCoreInit C")
         self.logger = return_logger(logfile)
         self._regions = []
         self._geoid_frame = []

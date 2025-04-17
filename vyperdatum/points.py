@@ -14,6 +14,7 @@ class VyperPoints(VyperCore):
 
     def __init__(self,  vdatum_directory: str = None, logfile: str = None, silent: bool = False):
         # ensure that vdatum_directory is passed in the first time this is run, to store that path
+        print("VyperPoints Init")
         super().__init__(vdatum_directory, logfile, silent)
         self.x = None
         self.y = None
