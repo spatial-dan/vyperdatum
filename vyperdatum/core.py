@@ -106,7 +106,7 @@ class VyperCore:
 
         # Verify bounds are valid. If not, log error and exit early.
         if x_min > x_max or y_min > y_max:
-            print(f"[ERROR] Invalid bounds: x_min must be <= x_max and y_min <= y_max. Received: x_min={x_min}, y_min={y_min}, x_max={x_max}, y_max={y_max}")
+            print(f"[ERROR] Invalid bounds (A): x_min must be <= x_max and y_min <= y_max. Received: x_min={x_min}, y_min={y_min}, x_max={x_max}, y_max={y_max}")
             return
 
         if x_min == x_max and y_min == y_max:
