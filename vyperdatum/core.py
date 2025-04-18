@@ -106,7 +106,7 @@ class VyperCore:
 
         # Verify bounds are valid. If not, log error and exit early.
         if x_min > x_max or y_min > y_max:
-            print(f"[ERROR] Invalid bounds (A): x_min must be <= x_max and y_min <= y_max. Received: x_min={x_min}, y_min={y_min}, x_max={x_max}, y_max={y_max}")
+            print(f"[ERROR] Invalid bounds: x_min must be <= x_max and y_min <= y_max. Received: x_min={x_min}, y_min={y_min}, x_max={x_max}, y_max={y_max}")
             return
 
         if x_min == x_max and y_min == y_max:
@@ -156,14 +156,13 @@ class VyperCore:
                         print(f"[WARNING] Unable to read feature name from feature in layer of {self.datum_data.polygon_files[region]}")
                         continue
 
-                    if isinstance(feature_name, str) and feature_name.startswith('valid-transform'):
-                        valid_vdatum_poly = feature.GetGeometryRef()
-                        if valid_vdatum_poly is not None and data_geometry.Intersect(valid_vdatum_poly):
-                            print(f"[INFO] Region '{region}' intersects with provided bounds via a valid-transform feature.")
-                            intersecting_regions.append(region)
-                            gframe = self.datum_data.get_geoid_frame(region)
-                            self._geoid_frame.append(gframe)
-                            found = True
+                    valid_vdatum_poly = feature.GetGeometryRef()
+                    if valid_vdatum_poly is not None and data_geometry.Intersect(valid_vdatum_poly):
+                        print(f"[INFO] Region '{region}' intersects with provided bounds.")
+                        intersecting_regions.append(region)
+                        gframe = self.datum_data.get_geoid_frame(region)
+                        self._geoid_frame.append(gframe)
+                        found = True
                     # Release feature reference if necessary
                     feature = None
                 # Release layer reference if necessary
