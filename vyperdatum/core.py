@@ -105,11 +105,12 @@ class VyperCore:
         print(f"[INFO] Starting set_region_by_bounds with bounds: x_min={x_min}, y_min={y_min}, x_max={x_max}, y_max={y_max}")
 
         # Verify bounds are valid. If not, log error and exit early.
-        if x_min == x_max and y_min == y_max:
-            print(f"[INFO] Bounds are a single point at ({x_min}, {y_min})")
-        elif x_min > x_max or y_min > y_max:
-            print(f"[ERROR] Invalid bounds provided: x_min must be <= x_max and y_min must be <= y_max. Received: x_min={x_min}, y_min={y_min}, x_max={x_max}, y_max={y_max}")
+        if x_min > x_max or y_min > y_max:
+            print(f"[ERROR] Invalid bounds: x_min must be <= x_max and y_min <= y_max. Received: x_min={x_min}, y_min={y_min}, x_max={x_max}, y_max={y_max}")
             return
+
+        if x_min == x_max and y_min == y_max:
+            print(f"[INFO] Bounds collapse to a point at ({x_min}, {y_min})")
 
         # Build corners from the provided bounds
         ul = (x_min, y_max)
